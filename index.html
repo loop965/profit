@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>基金盈利预演计算器</title>
+    <title>基金盈利预演精算器</title>
     <style>
         body { font-family: -apple-system, sans-serif; padding: 20px; background: #fdfdfd; display: flex; justify-content: center; }
         .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.05); width: 100%; max-width: 420px; border: 1px solid #eee; }
-        h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; font-size: 20px; }
+        h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; font-size: 20px; border-bottom: 2px solid #52c41a; padding-bottom: 10px; }
         .group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 8px; font-size: 14px; color: #666; font-weight: 600; }
         input { width: 100%; padding: 14px; border: 1px solid #e0e0e0; border-radius: 10px; font-size: 16px; box-sizing: border-box; outline: none; background: #f9f9f9; }
-        input:focus { border-color: #52c41a; background: #fff; box-shadow: 0 0 0 3px rgba(82,196,26,0.1); }
+        input:focus { border-color: #52c41a; background: #fff; }
         button { width: 100%; padding: 16px; background: #52c41a; color: white; border: none; border-radius: 10px; font-size: 17px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         
         #result { margin-top: 25px; display: none; border-radius: 12px; overflow: hidden; border: 1px solid #d9f7be; }
@@ -21,8 +21,9 @@
         .res-row:last-child { margin-bottom: 0; }
         .lab { color: #888; }
         .val { font-weight: bold; font-family: 'Monaco', monospace; }
-        .profit { color: #52c41a; font-size: 20px; } /* 盈利颜色 */
-        .total { color: #1890ff; }
+        .profit { color: #52c41a; font-size: 22px; } 
+        .blue { color: #1890ff; }
+        .orange { color: #fa8c16; }
     </style>
 </head>
 <body>
@@ -37,16 +38,16 @@
 
     <div class="group">
         <label>2. 当前亏损金额 (元)</label>
-        <input type="text" id="loss" placeholder="目前账户亏了多少，如: 2000" oninput="fix(this)">
+        <input type="text" id="loss" placeholder="如: 2000" oninput="fix(this)">
     </div>
     
     <div class="group">
-        <label>3. 现在的点位 (当前实时价)</label>
+        <label>3. 现在的点位 (实时价)</label>
         <input type="text" id="nowPrice" placeholder="如: 1.2150" oninput="fix(this)">
     </div>
 
     <div class="group">
-        <label>4. 预演目标点位 (涨到多少点?)</label>
+        <label>4. 预演目标点位 (涨到多少?)</label>
         <input type="text" id="targetPrice" placeholder="如: 1.8000" oninput="fix(this)">
     </div>
 
@@ -54,17 +55,25 @@
 
     <div id="result">
         <div class="res-header">
-            <div class="lab" style="margin-bottom:5px;">预计到手盈利</div>
+            <div class="lab" style="margin-bottom:5px;">预计到手净利润</div>
             <div id="r_profit" class="val profit"></div>
         </div>
         <div class="res-body">
             <div class="res-row">
-                <span class="lab">届时总市值:</span>
-                <span id="r_market" class="val total"></span>
+                <span class="lab">目标盈利率:</span>
+                <span id="r_profit_rate" class="val orange" style="font-size:18px;"></span>
             </div>
             <div class="res-row">
-                <span class="lab">总涨幅幅度:</span>
-                <span id="r_percent" class="val" style="color:#fa8c16"></span>
+                <span class="lab">持仓总本金:</span>
+                <span id="r_principal" class="val" style="color:#555"></span>
+            </div>
+            <div class="res-row">
+                <span class="lab">届时总市值:</span>
+                <span id="r_market" class="val blue"></span>
+            </div>
+            <div class="res-row">
+                <span class="lab">距目标需再涨:</span>
+                <span id="r_percent" class="val orange"></span>
             </div>
             <div class="res-row">
                 <span class="lab">持有总份额:</span>
@@ -78,7 +87,7 @@
 function fix(obj) {
     obj.value = obj.value.replace(/[^\d.]/g, ""); 
     const t = obj.value.split('.');
-    if (t.length > 2) obj.value = t[0] + "." + t.slice(1).join("");
+    if (t.length > 2) obj.value = t + "." + t.slice(1).join("");
 }
 
 function calculateProfit() {
@@ -92,24 +101,32 @@ function calculateProfit() {
         return;
     }
 
-    // 1. 反推当前总份额 = 亏损 / (成本 - 当前价)
+    // 1. 反推当前总份额
     const shares = loss / (cost - nowPrice);
     
-    // 2. 总投入本金 = 份额 * 成本
+    // 2. 总投入本金
     const principal = shares * cost;
 
-    // 3. 目标市值 = 份额 * 目标价
+    // 3. 目标市值
     const targetMarketVal = shares * targetPrice;
 
-    // 4. 盈利金额 = 目标市值 - 总本金
+    // 4. 净利润 = 目标市值 - 总本金
     const netProfit = targetMarketVal - principal;
 
-    // 5. 目标涨幅 (从当前点位算起)
+    // 5. 目标盈利率 = (净利润 / 总本金) * 100
+    const profitRate = (netProfit / principal) * 100;
+
+    // 6. 需再涨幅度 (从当前价算起)
     const increaseFromNow = ((targetPrice / nowPrice) - 1) * 100;
 
+    // 格式化数字
+    const fmt = (num) => num.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
     // 渲染结果
-    document.getElementById('r_profit').innerText = "￥" + netProfit.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    document.getElementById('r_market').innerText = "￥" + targetMarketVal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById('r_profit').innerText = "￥" + fmt(netProfit);
+    document.getElementById('r_profit_rate').innerText = profitRate.toFixed(2) + "%";
+    document.getElementById('r_principal').innerText = "￥" + fmt(principal);
+    document.getElementById('r_market').innerText = "￥" + fmt(targetMarketVal);
     document.getElementById('r_percent').innerText = "+" + increaseFromNow.toFixed(2) + "%";
     document.getElementById('r_shares').innerText = shares.toFixed(2) + " 份";
 

@@ -2,184 +2,169 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>财富看板</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>投资助手 Pro</title>
+    <!-- iOS PWA 沉浸式设置 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <style>
         :root {
-            --ali: #1677ff; --wx: #07c160; --ths: #ff4d4f;
-            --cry: #f7931a; --cmb: #c51d24; --gjj: #0052d9;
-            --summary-bg: linear-gradient(135deg, #2b32b2 0%, #1488cc 100%);
+            --bg-color: #F4F5F7;
+            --card-bg: #FFFFFF;
+            --primary-blue: #007AFF;
+            --text-main: #1C1C1E;
+            --text-secondary: #8E8E93;
         }
-        body { font-family: -apple-system, sans-serif; background: #f5f7fa; display: flex; justify-content: center; min-height: 100vh; margin: 0; padding: 15px; box-sizing: border-box; }
-        .app-card { background: #fff; border-radius: 24px; padding: 20px; width: 100%; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); height: fit-content; }
-        header h2 { text-align: center; margin: 0 0 15px 0; font-size: 16px; color: #333; letter-spacing: 1px; }
-        
-        /* 顶部汇总区域 */
-        .summary-card { 
-            background: var(--summary-bg); 
-            padding: 15px 18px; border-radius: 16px; 
-            color: #fff; display: flex; align-items: center; justify-content: space-between; 
-            margin-bottom: 5px;
-            box-shadow: 0 8px 20px rgba(20, 136, 204, 0.2);
+
+        [data-theme='dark'] {
+            --bg-color: #000000;
+            --card-bg: #1C1C1E;
+            --text-main: #FFFFFF;
         }
-        .summary-label { font-size: 11px; color: rgba(255,255,255,0.8); }
-        .summary-val { font-size: 24px; font-weight: 700; font-family: "DIN Alternate", sans-serif; }
-        .update-time { font-size: 10px; color: #999; text-align: right; margin-bottom: 20px; padding-right: 5px; }
 
-        /* 中间输入网格 */
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 15px; margin-bottom: 25px; }
-        .label-wrap { display: flex; align-items: center; margin-bottom: 4px; }
-        .brand-line { width: 3px; height: 10px; border-radius: 2px; margin-right: 6px; }
-        label { font-size: 12px; color: #888; }
-        .input-box { position: relative; border-bottom: 1px solid #eee; }
-        .input-box:focus-within { border-bottom-color: #1488cc; }
-        .input-box::before { content: "¥"; position: absolute; left: 0; top: 50%; transform: translateY(-50%); color: #333; font-size: 14px; font-weight: 600; }
-        input { width: 100%; padding: 8px 0 8px 18px; border: none; background: transparent; font-size: 18px; font-weight: 600; color: #333; outline: none; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
 
-        /* 底部饼图分析区域 */
-        .analysis-section { border-top: 1px dashed #eee; padding-top: 20px; margin-top: 10px; }
-        .analysis-title { font-size: 13px; color: #333; font-weight: 600; margin-bottom: 15px; text-align: center; }
-        .chart-container { display: flex; flex-direction: column; align-items: center; gap: 15px; }
-        .pie-chart { width: 120px; height: 120px; border-radius: 50%; background: #f0f0f0; transition: 0.5s; position: relative; }
-        .pie-chart::after { content: ""; position: absolute; width: 66px; height: 66px; background: white; border-radius: 50%; top: 27px; left: 27px; }
-        
-        .chart-legend { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 15px; width: 100%; font-size: 11px; color: #666; }
-        .legend-item { display: flex; align-items: center; }
-        .dot { width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; }
+        /* 页面视图系统 */
+        .view-stack { position: relative; width: 100%; height: 100%; overflow: hidden; }
 
-        .footer { margin-top: 30px; text-align: center; }
-        .clear-btn { background: none; color: #ccc; border: none; font-size: 11px; text-decoration: underline; cursor: pointer; }
+        .view {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-color); transition: transform 0.4s cubic-bezier(0.3, 1, 0.3, 1), opacity 0.4s;
+            overflow-y: auto; -webkit-overflow-scrolling: touch; box-shadow: -5px 0 20px rgba(0,0,0,0.1);
+        }
+
+        /* 初始状态 */
+        #main-view { z-index: 10; transform: translateX(0); }
+        #sub-view { z-index: 20; transform: translateX(100%); }
+
+        /* 动画激活状态 */
+        .is-pushed #main-view { transform: translateX(-30%); opacity: 0.8; }
+        .is-pushed #sub-view { transform: translateX(0); }
+
+        /* iOS 导航栏 */
+        .ios-nav {
+            position: sticky; top: 0; height: 44px; padding-top: env(safe-area-inset-top);
+            background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            display: flex; align-items: center; justify-content: center; font-weight: 600;
+            border-bottom: 0.5px solid rgba(0,0,0,0.1); z-index: 100;
+        }
+        [data-theme='dark'] .ios-nav { background: rgba(28,28,30,0.85); border-bottom: 0.5px solid #333; }
+
+        .back-btn { position: absolute; left: 16px; color: var(--primary-blue); cursor: pointer; display: none; font-weight: 400; }
+
+        /* 首页特有样式 */
+        .header { padding: 60px 24px 30px; display: flex; justify-content: space-between; align-items: baseline; }
+        .header h1 { font-size: 30px; font-weight: 800; margin: 0; letter-spacing: -0.6px; }
+        .menu-list { padding: 0 16px; display: flex; flex-direction: column; gap: 14px; }
+        .menu-card { 
+            background: var(--card-bg); border-radius: 20px; padding: 18px; 
+            display: flex; align-items: center; gap: 16px; text-decoration: none; color: inherit;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+        }
+        .menu-card:active { background: #E5E5E7; }
+        .card-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 26px; }
     </style>
 </head>
-<body>
+<body data-theme="light">
 
-<div class="app-card">
-    <header><h2>资产配置明细</h2></header>
-    
-    <div class="summary-card">
-        <div class="summary-label">净资产总计 (CNY)</div>
-        <div class="summary-val">¥ <span id="res">0.00</span></div>
-    </div>
-    <div class="update-time">最后记账：<span id="last-update">从未</span></div>
+<div class="view-stack" id="app-shell">
+    <!-- 主页面 (Index) -->
+    <section class="view" id="main-view">
+        <div class="header">
+            <div class="header-text">
+                <h1>投资助手</h1>
+                <p style="color:var(--text-secondary); margin:5px 0 0; font-size:14px;">Smart Planner</p>
+            </div>
+            <div onclick="toggleTheme()" style="font-size:22px; cursor:pointer;">🌗</div>
+        </div>
 
-    <div class="grid">
-        <div class="item">
-            <div class="label-wrap"><div class="brand-line" style="background:var(--ali)"></div><label>支付宝</label></div>
-            <div class="input-box"><input type="text" inputmode="decimal" class="asset-input" id="alipay" data-color="var(--ali)" data-name="支付宝" placeholder="0"></div>
-        </div>
-        <div class="item">
-            <div class="label-wrap"><div class="brand-line" style="background:var(--wx)"></div><label>微信支付</label></div>
-            <div class="input-box"><input type="text" inputmode="decimal" class="asset-input" id="wechat" data-color="var(--wx)" data-name="微信" placeholder="0"></div>
-        </div>
-        <div class="item">
-            <div class="label-wrap"><div class="brand-line" style="background:var(--ths)"></div><label>同花顺</label></div>
-            <div class="input-box"><input type="text" inputmode="decimal" class="asset-input" id="ths" data-color="var(--ths)" data-name="同花顺" placeholder="0"></div>
-        </div>
-        <div class="item">
-            <div class="label-wrap"><div class="brand-line" style="background:var(--cry)"></div><label>加密资产</label></div>
-            <div class="input-box"><input type="text" inputmode="decimal" class="asset-input" id="crypto" data-color="var(--cry)" data-name="加密币" placeholder="0"></div>
-        </div>
-        <div class="item">
-            <div class="label-wrap"><div class="brand-line" style="background:var(--cmb)"></div><label>招商银行</label></div>
-            <div class="input-box"><input type="text" inputmode="decimal" class="asset-input" id="cmb" data-color="var(--cmb)" data-name="招行" placeholder="0"></div>
-        </div>
-        <div class="item">
-            <div class="label-wrap"><div class="brand-line" style="background:var(--gjj)"></div><label>公积金</label></div>
-            <div class="input-box"><input type="text" inputmode="decimal" class="asset-input" id="provident" data-color="var(--gjj)" data-name="公积金" placeholder="0"></div>
-        </div>
-    </div>
+        <div class="menu-list">
+            <!-- ✨ 修改后的 a 标签，调用 loadPage 函数 -->
+            <a href="javascript:void(0)" onclick="loadPage('plan.html', '加仓计划')" class="menu-card">
+                <div class="card-icon" style="background: linear-gradient(135deg, #FF9500, #FFCC00);">📊</div>
+                <div style="flex:1">
+                    <b style="font-size:18px">基金加仓计划</b><br>
+                    <span style="font-size:13px; color:var(--text-secondary)">模拟成本价下跌路径方案</span>
+                </div>
+                <span style="color:#C4C4C6">〉</span>
+            </a>
 
-    <!-- 移至底部的分析区域 -->
-    <div class="analysis-section" id="analysis-box" style="display:none;">
-        <div class="analysis-title">资产分布比例</div>
-        <div class="chart-container">
-            <div class="pie-chart" id="pie"></div>
-            <div class="chart-legend" id="legend"></div>
+            <a href="javascript:void(0)" onclick="loadPage('valuation.html', '估值红绿灯')" class="menu-card">
+                <div class="card-icon" style="background: linear-gradient(135deg, #34C759, #007AFF);">🚥</div>
+                <div style="flex:1">
+                    <b style="font-size:18px">估值红绿灯</b><br>
+                    <span style="font-size:13px; color:var(--text-secondary)">主流指数估值看板</span>
+                </div>
+                <span style="color:#C4C4C6">〉</span>
+            </a>
         </div>
-    </div>
+    </section>
 
-    <div class="footer">
-        <button class="clear-btn" onclick="clearData()">清空所有数据</button>
-    </div>
+    <!-- 子页面加载容器 -->
+    <section class="view" id="sub-view">
+        <div class="ios-nav">
+            <span class="back-btn" id="backBtn" onclick="goBack()">〈 返回</span>
+            <span id="sub-title">标题</span>
+        </div>
+        <div id="sub-content">
+            <!-- 内容动态注入 -->
+        </div>
+    </section>
 </div>
 
 <script>
-    const inputs = document.querySelectorAll('.asset-input');
-    const resDisplay = document.getElementById('res');
-    const timeDisplay = document.getElementById('last-update');
-    const analysisBox = document.getElementById('analysis-box');
-    const pieChart = document.getElementById('pie');
-    const legendBox = document.getElementById('legend');
-
-    window.onload = () => {
-        inputs.forEach(i => {
-            const saved = localStorage.getItem('wealth_final_' + i.id);
-            if (saved) i.value = saved;
-        });
-        const savedTime = localStorage.getItem('wealth_final_time');
-        if (savedTime) timeDisplay.innerText = savedTime;
-        updateDisplay(false);
-    };
-
-    function updateDisplay(shouldUpdateTime = true) {
-        let sum = 0;
-        let segments = [];
-        inputs.forEach(i => {
-            const val = parseFloat(i.value) || 0;
-            sum += val;
-            if (val > 0) {
-                segments.push({ name: i.getAttribute('data-name'), value: val, color: i.getAttribute('data-color') });
+        async function loadPage(url, title) {
+            const shell = document.getElementById('app-shell');
+            const subContent = document.getElementById('sub-content');
+            const subTitle = document.getElementById('sub-title');
+            
+            try {
+                const response = await fetch(url);
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // 1. 先注入 HTML 内容
+                subContent.innerHTML = doc.body.innerHTML;
+                subTitle.innerText = title;
+                
+                // 2. 动画推入
+                shell.classList.add('is-pushed');
+                document.getElementById('backBtn').style.display = 'block';
+    
+                // 3. ✨ 关键修复：延迟执行脚本，确保 DOM 已经挂载完成
+                setTimeout(() => {
+                    const scripts = subContent.querySelectorAll('script');
+                    scripts.forEach(oldScript => {
+                        const newScript = document.createElement('script');
+                        // 拷贝脚本内容
+                        if (oldScript.src) {
+                            newScript.src = oldScript.src;
+                        } else {
+                            newScript.textContent = oldScript.textContent;
+                        }
+                        // 挂载到当前的 subContent 而不是全局 body，防止找不到父节点
+                        subContent.appendChild(newScript);
+                    });
+                }, 50); // 给浏览器 50ms 渲染时间
+    
+            } catch (e) {
+                console.error("加载失败:", e);
             }
-        });
-
-        resDisplay.innerText = sum.toLocaleString('zh-CN', { minimumFractionDigits: 2 });
-
-        if (sum > 0) {
-            analysisBox.style.display = 'block';
-            let currentPercent = 0;
-            let gradientStr = segments.map(s => {
-                let start = currentPercent;
-                let end = start + (s.value / sum) * 100;
-                currentPercent = end;
-                return `${s.color} ${start}% ${end}%`;
-            }).join(', ');
-            pieChart.style.background = `conic-gradient(${gradientStr})`;
-            legendBox.innerHTML = segments.map(s => {
-                let p = ((s.value / sum) * 100).toFixed(1);
-                return `<div class="legend-item"><div class="dot" style="background:${s.color}"></div>${s.name} ${p}%</div>`;
-            }).join('');
-        } else {
-            analysisBox.style.display = 'none';
+        }
+    
+        function goBack() {
+            document.getElementById('app-shell').classList.remove('is-pushed');
+            // 返回时隐藏按钮
+            document.getElementById('backBtn').style.display = 'none';
         }
 
-        if (shouldUpdateTime) {
-            const now = new Date();
-            const timeStr = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,'0')}-${now.getDate().toString().padStart(2,'0')} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
-            timeDisplay.innerText = timeStr;
-            localStorage.setItem('wealth_final_time', timeStr);
-        }
-    }
 
-    function handleInput(e) {
-        let val = e.target.value.replace(/[^\d.]/g, ""); 
-        const parts = val.split(".");
-        if (parts.length > 2) val = parts + "." + parts.slice(1).join("");
-        e.target.value = val;
-        localStorage.setItem('wealth_final_' + e.target.id, val);
-        updateDisplay(true);
+    function toggleTheme() {
+        const body = document.body;
+        const current = body.getAttribute('data-theme');
+        body.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
     }
-
-    function clearData() {
-        if (confirm("确定要清空吗？")) {
-            inputs.forEach(i => { i.value = ""; localStorage.removeItem('wealth_final_' + i.id); });
-            localStorage.removeItem('wealth_final_time');
-            timeDisplay.innerText = "从未";
-            updateDisplay(false);
-        }
-    }
-
-    inputs.forEach(i => i.addEventListener('input', handleInput));
 </script>
-
 </body>
 </html>

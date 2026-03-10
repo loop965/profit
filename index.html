@@ -60,7 +60,15 @@ button.red{background:#dc2626}
 
 <div class="header">
 <h1>📊 InvestCalc Ultimate</h1>
-<div class="subtitle">投资分析 · 回本计算 · 风险模拟</div>
+<div class="subtitle">投资分析 · 回本计算 · 风险模拟 · 实时指数</div>
+</div>
+
+<div class="card">
+<h2>实时指数</h2>
+<div class="row">
+<input id="liveIndex" placeholder="恒生科技实时指数" readonly>
+<button onclick="loadIndex()">刷新</button>
+</div>
 </div>
 
 <div class="dashboard">
@@ -157,6 +165,30 @@ button.red{background:#dc2626}
 
 <script>
 let positions=[]
+
+
+// ===== 实时指数 =====
+async function loadIndex(){
+ try{
+ const res=await fetch("https://query1.finance.yahoo.com/v8/finance/chart/%5EHSTECH")
+ const data=await res.json()
+ const price=data.chart.result[0].meta.regularMarketPrice
+
+ document.getElementById('liveIndex').value=price
+ document.getElementById('currentPrice').value=price
+ }
+ catch(e){
+ console.log('指数加载失败',e)
+ }
+}
+
+// 每60秒刷新
+setInterval(loadIndex,60000)
+
+// 页面启动加载
+window.onload=loadIndex
+
+
 let chart
 
 function switchTab(i){

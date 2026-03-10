@@ -1,170 +1,306 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>投资助手 Pro</title>
-    <!-- iOS PWA 沉浸式设置 -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <style>
-        :root {
-            --bg-color: #F4F5F7;
-            --card-bg: #FFFFFF;
-            --primary-blue: #007AFF;
-            --text-main: #1C1C1E;
-            --text-secondary: #8E8E93;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InvestCalc Ultimate</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*{box-sizing:border-box}
+body{font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,#020617,#0f172a);margin:0}
 
-        [data-theme='dark'] {
-            --bg-color: #000000;
-            --card-bg: #1C1C1E;
-            --text-main: #FFFFFF;
-        }
+.app{max-width:440px;margin:auto;min-height:100vh;background:#f8fafc;padding:16px;border-radius:26px;box-shadow:0 30px 80px rgba(0,0,0,.45)}
 
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
+.header{text-align:center;margin-bottom:10px}
+.header h1{margin:0;font-size:22px}
+.subtitle{font-size:12px;color:#64748b}
 
-        /* 页面视图系统 */
-        .view-stack { position: relative; width: 100%; height: 100%; overflow: hidden; }
+.dashboard{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.stat{background:white;border-radius:14px;padding:10px;box-shadow:0 6px 16px rgba(0,0,0,.08)}
+.stat .label{font-size:11px;color:#64748b}
+.stat .value{font-size:16px;font-weight:700}
 
-        .view {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-color); transition: transform 0.4s cubic-bezier(0.3, 1, 0.3, 1), opacity 0.4s;
-            overflow-y: auto; -webkit-overflow-scrolling: touch; box-shadow: -5px 0 20px rgba(0,0,0,0.1);
-        }
+.card{background:white;padding:14px;border-radius:16px;margin-bottom:12px;box-shadow:0 6px 20px rgba(0,0,0,.08)}
+.card h2{font-size:14px;margin:0 0 10px 0;color:#334155}
 
-        /* 初始状态 */
-        #main-view { z-index: 10; transform: translateX(0); }
-        #sub-view { z-index: 20; transform: translateX(100%); }
+.row{display:flex;gap:8px;margin-bottom:8px}
 
-        /* 动画激活状态 */
-        .is-pushed #main-view { transform: translateX(-30%); opacity: 0.8; }
-        .is-pushed #sub-view { transform: translateX(0); }
+input,select{flex:1;padding:9px;border-radius:10px;border:1px solid #e2e8f0;font-size:13px}
 
-        /* iOS 导航栏 */
-        .ios-nav {
-            position: sticky; top: 0; height: 44px; padding-top: env(safe-area-inset-top);
-            background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            display: flex; align-items: center; justify-content: center; font-weight: 600;
-            border-bottom: 0.5px solid rgba(0,0,0,0.1); z-index: 100;
-        }
-        [data-theme='dark'] .ios-nav { background: rgba(28,28,30,0.85); border-bottom: 0.5px solid #333; }
+button{padding:9px 12px;border:none;border-radius:10px;font-size:12px;font-weight:600;background:#2563eb;color:white;cursor:pointer}
+button.secondary{background:#64748b}
+button.green{background:#16a34a}
+button.red{background:#dc2626}
 
-        .back-btn { position: absolute; left: 16px; color: var(--primary-blue); cursor: pointer; display: none; font-weight: 400; }
+.positions{font-size:12px}
+.position{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f1f5f9}
 
-        /* 首页特有样式 */
-        .header { padding: 60px 24px 30px; display: flex; justify-content: space-between; align-items: baseline; }
-        .header h1 { font-size: 30px; font-weight: 800; margin: 0; letter-spacing: -0.6px; }
-        .menu-list { padding: 0 16px; display: flex; flex-direction: column; gap: 14px; }
-        .menu-card { 
-            background: var(--card-bg); border-radius: 20px; padding: 18px; 
-            display: flex; align-items: center; gap: 16px; text-decoration: none; color: inherit;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.03);
-        }
-        .menu-card:active { background: #E5E5E7; }
-        .card-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 26px; }
-    </style>
+.metric{display:flex;justify-content:space-between;font-size:13px;padding:4px 0}
+.greenText{color:#16a34a}
+.redText{color:#dc2626}
+
+.table{width:100%;font-size:12px;border-collapse:collapse;margin-top:6px}
+.table th,.table td{padding:6px;border-bottom:1px solid #e2e8f0;text-align:center}
+
+.chartBox{height:200px}
+
+.tabs{display:flex;margin-bottom:10px;background:#e2e8f0;border-radius:10px;overflow:hidden}
+.tab{flex:1;text-align:center;padding:8px;font-size:12px;cursor:pointer}
+.tab.active{background:white;font-weight:600}
+
+.hidden{display:none}
+
+.footer{text-align:center;font-size:11px;color:#94a3b8;padding:10px 0}
+</style>
 </head>
-<body data-theme="light">
+<body>
 
-<div class="view-stack" id="app-shell">
-    <!-- 主页面 (Index) -->
-    <section class="view" id="main-view">
-        <div class="header">
-            <div class="header-text">
-                <h1>投资助手</h1>
-                <p style="color:var(--text-secondary); margin:5px 0 0; font-size:14px;">Smart Planner</p>
-            </div>
-            <div onclick="toggleTheme()" style="font-size:22px; cursor:pointer;">🌗</div>
-        </div>
+<div class="app">
 
-        <div class="menu-list">
-            <!-- ✨ 修改后的 a 标签，调用 loadPage 函数 -->
-            <a href="javascript:void(0)" onclick="loadPage('plan.html', '加仓计划')" class="menu-card">
-                <div class="card-icon" style="background: linear-gradient(135deg, #FF9500, #FFCC00);">📊</div>
-                <div style="flex:1">
-                    <b style="font-size:18px">基金加仓计划</b><br>
-                    <span style="font-size:13px; color:var(--text-secondary)">模拟成本价下跌路径方案</span>
-                </div>
-                <span style="color:#C4C4C6">〉</span>
-            </a>
+<div class="header">
+<h1>📊 InvestCalc Ultimate</h1>
+<div class="subtitle">投资分析 · 回本计算 · 风险模拟</div>
+</div>
 
-            <a href="javascript:void(0)" onclick="loadPage('valuation.html', '估值红绿灯')" class="menu-card">
-                <div class="card-icon" style="background: linear-gradient(135deg, #34C759, #007AFF);">🚥</div>
-                <div style="flex:1">
-                    <b style="font-size:18px">估值红绿灯</b><br>
-                    <span style="font-size:13px; color:var(--text-secondary)">主流指数估值看板</span>
-                </div>
-                <span style="color:#C4C4C6">〉</span>
-            </a>
-        </div>
-    </section>
+<div class="dashboard">
+<div class="stat"><div class="label">总投入</div><div id="dashInvest" class="value">-</div></div>
+<div class="stat"><div class="label">平均成本</div><div id="dashCost" class="value">-</div></div>
+<div class="stat"><div class="label">当前市值</div><div id="dashValue" class="value">-</div></div>
+<div class="stat"><div class="label">总盈亏</div><div id="dashProfit" class="value">-</div></div>
+</div>
 
-    <!-- 子页面加载容器 -->
-    <section class="view" id="sub-view">
-        <div class="ios-nav">
-            <span class="back-btn" id="backBtn" onclick="goBack()">〈 返回</span>
-            <span id="sub-title">标题</span>
-        </div>
-        <div id="sub-content">
-            <!-- 内容动态注入 -->
-        </div>
-    </section>
+<div class="tabs">
+<div class="tab active" onclick="switchTab(0)">持仓</div>
+<div class="tab" onclick="switchTab(1)">收益曲线</div>
+<div class="tab" onclick="switchTab(2)">风险分析</div>
+</div>
+
+<div id="tab0">
+
+<div class="card">
+<h2>买入记录</h2>
+<div class="row">
+<input id="price" placeholder="价格 / 指数">
+<input id="amount" placeholder="金额">
+</div>
+<div class="row">
+<button onclick="addPosition()">添加</button>
+<button class="secondary" onclick="save()">保存</button>
+<button class="secondary" onclick="load()">读取</button>
+</div>
+<div class="positions" id="positions"></div>
+</div>
+
+<div class="card">
+<h2>当前收益</h2>
+<div class="row">
+<input id="currentPrice" placeholder="当前价格">
+<button class="green" onclick="calc()">计算</button>
+</div>
+<div id="result"></div>
+</div>
+
+<div class="card">
+<h2>智能加仓策略</h2>
+<div class="row">
+<input id="remain" placeholder="剩余资金">
+<input id="maxDrop" placeholder="最大跌幅 %">
+</div>
+<button style="width:100%" onclick="strategy()">生成策略</button>
+<div id="strategy"></div>
+</div>
+
+</div>
+
+<div id="tab1" class="hidden">
+
+<div class="card">
+<h2>收益曲线模拟</h2>
+<div class="row">
+<input id="simRange" placeholder="模拟范围 % (如50)">
+<button onclick="drawChart()">生成</button>
+</div>
+<div class="chartBox">
+<canvas id="chart"></canvas>
+</div>
+</div>
+
+</div>
+
+<div id="tab2" class="hidden">
+
+<div class="card">
+<h2>最大回撤模拟</h2>
+<div class="row">
+<input id="crash" placeholder="市场下跌 %">
+<button onclick="riskCalc()">计算风险</button>
+</div>
+<div id="risk"></div>
+</div>
+
+<div class="card">
+<h2>未来收益预测</h2>
+<div class="row">
+<input id="years" placeholder="投资年数">
+<input id="rate" placeholder="年收益率 %">
+</div>
+<button style="width:100%" onclick="futureValue()">预测</button>
+<div id="future"></div>
+</div>
+
+</div>
+
+<div class="footer">InvestCalc Ultimate · 本地计算</div>
+
 </div>
 
 <script>
-        async function loadPage(url, title) {
-            const shell = document.getElementById('app-shell');
-            const subContent = document.getElementById('sub-content');
-            const subTitle = document.getElementById('sub-title');
-            
-            try {
-                const response = await fetch(url);
-                const html = await response.text();
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                
-                // 1. 先注入 HTML 内容
-                subContent.innerHTML = doc.body.innerHTML;
-                subTitle.innerText = title;
-                
-                // 2. 动画推入
-                shell.classList.add('is-pushed');
-                document.getElementById('backBtn').style.display = 'block';
-    
-                // 3. ✨ 关键修复：延迟执行脚本，确保 DOM 已经挂载完成
-                setTimeout(() => {
-                    const scripts = subContent.querySelectorAll('script');
-                    scripts.forEach(oldScript => {
-                        const newScript = document.createElement('script');
-                        // 拷贝脚本内容
-                        if (oldScript.src) {
-                            newScript.src = oldScript.src;
-                        } else {
-                            newScript.textContent = oldScript.textContent;
-                        }
-                        // 挂载到当前的 subContent 而不是全局 body，防止找不到父节点
-                        subContent.appendChild(newScript);
-                    });
-                }, 50); // 给浏览器 50ms 渲染时间
-    
-            } catch (e) {
-                console.error("加载失败:", e);
-            }
-        }
-    
-        function goBack() {
-            document.getElementById('app-shell').classList.remove('is-pushed');
-            // 返回时隐藏按钮
-            document.getElementById('backBtn').style.display = 'none';
-        }
+let positions=[]
+let chart
 
+function switchTab(i){
+ document.querySelectorAll('.tab').forEach((t,idx)=>{
+ t.classList.toggle('active',idx===i)
+ })
 
-    function toggleTheme() {
-        const body = document.body;
-        const current = body.getAttribute('data-theme');
-        body.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
-    }
+ document.querySelectorAll('[id^="tab"]').forEach((t,idx)=>{
+ t.classList.toggle('hidden',idx!==i)
+ })
+}
+
+function addPosition(){
+ const price=parseFloat(document.getElementById('price').value)
+ const amount=parseFloat(document.getElementById('amount').value)
+ if(!price||!amount)return
+ positions.push({price,amount})
+ render()
+}
+
+function render(){
+ const el=document.getElementById('positions')
+ el.innerHTML=''
+
+ positions.forEach((p,i)=>{
+ const div=document.createElement('div')
+ div.className='position'
+ div.innerHTML=`<span>${p.price}</span><span>${p.amount}</span><button class='red' onclick='removePos(${i})'>删</button>`
+ el.appendChild(div)
+ })
+}
+
+function removePos(i){positions.splice(i,1);render()}
+
+function getStats(){
+ let totalAmount=0
+ let totalUnits=0
+
+ positions.forEach(p=>{
+ totalAmount+=p.amount
+ totalUnits+=p.amount/p.price
+ })
+
+ return{totalAmount,totalUnits,cost:totalAmount/totalUnits}
+}
+
+function calc(){
+ const current=parseFloat(document.getElementById('currentPrice').value)
+ if(!current||positions.length===0)return
+
+ const s=getStats()
+ const value=s.totalUnits*current
+ const profit=value-s.totalAmount
+ const rate=(profit/s.totalAmount*100).toFixed(2)
+ const needUp=((s.cost/current-1)*100).toFixed(2)
+
+ document.getElementById('result').innerHTML=`
+ <div class='metric'><span>收益率</span><strong>${rate}%</strong></div>
+ <div class='metric'><span>回本需要</span><strong>${needUp}%</strong></div>`
+
+ document.getElementById('dashInvest').innerText=s.totalAmount.toFixed(0)
+ document.getElementById('dashCost').innerText=s.cost.toFixed(2)
+ document.getElementById('dashValue').innerText=value.toFixed(0)
+
+ const p=document.getElementById('dashProfit')
+ p.innerText=profit.toFixed(0)
+ p.style.color=profit>=0?'#16a34a':'#dc2626'
+}
+
+function drawChart(){
+ const range=parseFloat(document.getElementById('simRange').value)
+ if(!range)return
+
+ const s=getStats()
+
+ const labels=[]
+ const data=[]
+
+ for(let i=-range;i<=range;i+=5){
+ const price=s.cost*(1+i/100)
+ const value=s.totalUnits*price
+ const profit=value-s.totalAmount
+ labels.push(i+'%')
+ data.push(profit)
+ }
+
+ if(chart) chart.destroy()
+
+ chart=new Chart(document.getElementById('chart'),{
+ type:'line',
+ data:{labels,datasets:[{label:'盈亏变化',data,borderWidth:2,tension:.3}]}
+ })
+}
+
+function strategy(){
+ const remain=parseFloat(document.getElementById('remain').value)
+ const maxDrop=parseFloat(document.getElementById('maxDrop').value)
+ if(!remain||!maxDrop)return
+
+ const steps=[5,10,15,20,25,maxDrop]
+ const weights=[1,1.3,1.6,2,2.5,3]
+
+ let totalWeight=weights.reduce((a,b)=>a+b,0)
+ let html="<table class='table'><tr><th>跌幅</th><th>加仓</th></tr>"
+
+ for(let i=0;i<steps.length;i++){
+ const money=remain*(weights[i]/totalWeight)
+ html+=`<tr><td>-${steps[i]}%</td><td>${money.toFixed(0)}</td></tr>`
+ }
+
+ html+="</table>"
+ document.getElementById('strategy').innerHTML=html
+}
+
+function riskCalc(){
+ const crash=parseFloat(document.getElementById('crash').value)
+ if(!crash)return
+
+ const s=getStats()
+ const price=s.cost*(1-crash/100)
+ const value=s.totalUnits*price
+ const loss=value-s.totalAmount
+
+ document.getElementById('risk').innerHTML=`
+ <div class='metric'><span>下跌后价格</span><strong>${price.toFixed(2)}</strong></div>
+ <div class='metric'><span>预计亏损</span><strong class='redText'>${loss.toFixed(0)}</strong></div>`
+}
+
+function futureValue(){
+ const years=parseFloat(document.getElementById('years').value)
+ const rate=parseFloat(document.getElementById('rate').value)
+ if(!years||!rate)return
+
+ const s=getStats()
+
+ const future=s.totalAmount*Math.pow(1+rate/100,years)
+
+ document.getElementById('future').innerHTML=`
+ <div class='metric'><span>${years}年后资产</span><strong>${future.toFixed(0)}</strong></div>`
+}
+
+function save(){localStorage.setItem('invest_positions',JSON.stringify(positions))}
+function load(){const d=localStorage.getItem('invest_positions');if(d){positions=JSON.parse(d);render()}}
 </script>
+
 </body>
 </html>

@@ -1,0 +1,835 @@
+/* iOS 17风格理财记录应用 */
+:root {
+    /* iOS 17颜色系统 - 浅色模式 */
+    --ios-background: #f2f2f7;
+    --ios-surface: #ffffff;
+    --ios-surface-secondary: #f2f2f7;
+    --ios-surface-tertiary: #e5e5ea;
+    --ios-label: #000000;
+    --ios-label-secondary: #8e8e93;
+    --ios-label-tertiary: #c7c7cc;
+    --ios-separator: #c6c6c8;
+
+    /* 品牌颜色 - iOS 17蓝色调 */
+    --ios-blue: #007aff;
+    --ios-blue-light: #409cff;
+    --ios-green: #34c759;
+    --ios-red: #ff3b30;
+    --ios-orange: #ff9500;
+    --ios-purple: #af52de;
+
+    /* 毛玻璃效果 */
+    --ios-blur: blur(20px);
+
+    /* 阴影 */
+    --ios-shadow: 0px 4px 20px rgba(0, 0, 0, 0.08);
+    --ios-shadow-light: 0px 2px 10px rgba(0, 0, 0, 0.05);
+
+    /* 圆角 */
+    --ios-radius-small: 8px;
+    --ios-radius-medium: 12px;
+    --ios-radius-large: 16px;
+    --ios-radius-xlarge: 20px;
+
+    /* 字体 */
+    --ios-font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+
+    /* 间距 */
+    --ios-spacing-xs: 4px;
+    --ios-spacing-sm: 8px;
+    --ios-spacing-md: 12px;
+    --ios-spacing-lg: 16px;
+    --ios-spacing-xl: 20px;
+    --ios-spacing-xxl: 24px;
+}
+
+/* 暗色模式支持 */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --ios-background: #000000;
+        --ios-surface: #1c1c1e;
+        --ios-surface-secondary: #2c2c2e;
+        --ios-surface-tertiary: #3a3a3c;
+        --ios-label: #ffffff;
+        --ios-label-secondary: #98989d;
+        --ios-label-tertiary: #6c6c70;
+        --ios-separator: #38383a;
+
+        --ios-shadow: 0px 4px 20px rgba(0, 0, 0, 0.4);
+        --ios-shadow-light: 0px 2px 10px rgba(0, 0, 0, 0.2);
+    }
+}
+
+/* 基础样式重置 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--ios-font-family);
+    background-color: var(--ios-background);
+    color: var(--ios-label);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    padding-bottom: env(safe-area-inset-bottom);
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: var(--ios-spacing-lg);
+    padding-top: max(var(--ios-spacing-lg), env(safe-area-inset-top));
+}
+
+/* 头部样式 */
+.header {
+    margin-bottom: var(--ios-spacing-xl);
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--ios-spacing-md);
+}
+
+.app-title {
+    font-size: 28px;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--ios-blue), var(--ios-purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.header-actions {
+    display: flex;
+    gap: var(--ios-spacing-sm);
+}
+
+.icon-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: var(--ios-surface);
+    color: var(--ios-label-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--ios-shadow-light);
+    backdrop-filter: var(--ios-blur);
+    -webkit-backdrop-filter: var(--ios-blur);
+}
+
+.icon-btn:hover, .icon-btn:active {
+    background: var(--ios-surface-secondary);
+    color: var(--ios-label);
+    transform: scale(1.05);
+}
+
+/* 视图切换按钮 */
+.view-toggle {
+    display: flex;
+    background: var(--ios-surface);
+    border-radius: var(--ios-radius-large);
+    padding: var(--ios-spacing-xs);
+    box-shadow: var(--ios-shadow-light);
+    backdrop-filter: var(--ios-blur);
+    -webkit-backdrop-filter: var(--ios-blur);
+}
+
+.view-toggle button {
+    flex: 1;
+    padding: var(--ios-spacing-md) var(--ios-spacing-lg);
+    border: none;
+    background: transparent;
+    color: var(--ios-label-secondary);
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: var(--ios-radius-medium);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ios-spacing-xs);
+}
+
+.view-toggle button.active {
+    background: var(--ios-surface-secondary);
+    color: var(--ios-blue);
+    font-weight: 600;
+}
+
+/* 统计卡片 */
+.stats-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--ios-spacing-md);
+    margin-bottom: var(--ios-spacing-xl);
+}
+
+.stat-card {
+    background: var(--ios-surface);
+    border-radius: var(--ios-radius-large);
+    padding: var(--ios-spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--ios-spacing-lg);
+    box-shadow: var(--ios-shadow);
+    backdrop-filter: var(--ios-blur);
+    -webkit-backdrop-filter: var(--ios-blur);
+    transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--ios-radius-medium);
+    background: linear-gradient(135deg, var(--ios-blue-light), var(--ios-blue));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: var(--ios-label-secondary);
+    margin-bottom: var(--ios-spacing-xs);
+}
+
+.stat-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ios-label);
+}
+
+/* 日历头部 */
+.calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--ios-spacing-lg);
+    background: var(--ios-surface);
+    border-radius: var(--ios-radius-large);
+    padding: var(--ios-spacing-md) var(--ios-spacing-lg);
+    box-shadow: var(--ios-shadow-light);
+    backdrop-filter: var(--ios-blur);
+    -webkit-backdrop-filter: var(--ios-blur);
+}
+
+.nav-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: var(--ios-surface-secondary);
+    color: var(--ios-label);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.nav-btn:hover, .nav-btn:active {
+    background: var(--ios-surface-tertiary);
+    transform: scale(1.05);
+}
+
+.calendar-title {
+    text-align: center;
+}
+
+.calendar-title h2 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: var(--ios-spacing-xs);
+}
+
+.date-display {
+    font-size: 14px;
+    color: var(--ios-label-secondary);
+}
+
+/* 日历表格 */
+.calendar-container {
+    background: var(--ios-surface);
+    border-radius: var(--ios-radius-large);
+    padding: var(--ios-spacing-lg);
+    margin-bottom: var(--ios-spacing-xl);
+    box-shadow: var(--ios-shadow);
+    backdrop-filter: var(--ios-blur);
+    -webkit-backdrop-filter: var(--ios-blur);
+    overflow: hidden;
+}
+
+#calendar {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#calendar th {
+    padding: var(--ios-spacing-md) 0;
+    font-weight: 600;
+    color: var(--ios-label-secondary);
+    text-align: center;
+    font-size: 14px;
+}
+
+#calendar td {
+    width: 14.28%;
+    height: 60px;
+    text-align: center;
+    vertical-align: middle;
+    cursor: pointer;
+    position: relative;
+    transition: background-color 0.2s ease;
+    border-radius: var(--ios-radius-small);
+}
+
+#calendar td:hover {
+    background-color: var(--ios-surface-secondary);
+}
+
+#calendar td.selected {
+    background-color: var(--ios-blue);
+    color: white;
+}
+
+#calendar td .amount {
+    position: absolute;
+    bottom: 2px;
+    left: 0;
+    right: 0;
+    font-size: 10px;
+    color: var(--ios-green);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 月/年视图网格 */
+.month-grid, .year-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--ios-spacing-md);
+}
+
+.month-cell, .year-cell {
+    background: var(--ios-surface-secondary);
+    border-radius: var(--ios-radius-medium);
+    padding: var(--ios-spacing-lg);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.month-cell:hover, .year-cell:hover {
+    background: var(--ios-surface-tertiary);
+    transform: translateY(-2px);
+}
+
+.month-cell .amount, .year-cell .amount {
+    font-size: 12px;
+    color: var(--ios-green);
+    margin-top: var(--ios-spacing-xs);
+    font-weight: 500;
+}
+
+/* 输入区域 */
+.input-section {
+    margin-bottom: var(--ios-spacing-xl);
+}
+
+.input-card {
+    background: var(--ios-surface);
+    border-radius: var(--ios-radius-large);
+    padding: var(--ios-spacing-lg);
+    box-shadow: var(--ios-shadow);
+    backdrop-filter: var(--ios-blur);
+    -webkit-backdrop-filter: var(--ios-blur);
+}
+
+.input-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: var(--ios-spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--ios-spacing-sm);
+    color: var(--ios-label);
+}
+
+.date-input-group {
+    margin-bottom: var(--ios-spacing-lg);
+}
+
+.date-input-group label {
+    display: block;
+    font-size: 14px;
+    color: var(--ios-label-secondary);
+    margin-bottom: var(--ios-spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--ios-spacing-sm);
+}
+
+.date-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: var(--ios-spacing-md);
+}
+
+.date-input {
+    flex: 1;
+    padding: var(--ios-spacing-md);
+    border: 1px solid var(--ios-separator);
+    border-radius: var(--ios-radius-medium);
+    background: var(--ios-surface-secondary);
+    color: var(--ios-label);
+    font-family: inherit;
+    font-size: 16px;
+    transition: border-color 0.2s ease;
+}
+
+.date-input:focus {
+    outline: none;
+    border-color: var(--ios-blue);
+}
+
+.date-display-text {
+    font-size: 16px;
+    color: var(--ios-label);
+    font-weight: 500;
+}
+
+.input-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--ios-spacing-md);
+    margin-bottom: var(--ios-spacing-lg);
+}
+
+.input-group {
+    flex: 1;
+}
+
+.input-group label {
+    display: block;
+    font-size: 14px;
+    color: var(--ios-label-secondary);
+    margin-bottom: var(--ios-spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--ios-spacing-sm);
+}
+
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-with-icon .currency {
+    position: absolute;
+    left: var(--ios-spacing-md);
+    color: var(--ios-label-secondary);
+    font-weight: 500;
+    z-index: 1;
+}
+
+.input-with-icon input {
+    width: 100%;
+    padding: var(--ios-spacing-md);
+    padding-left: 36px;
+    border: 1px solid var(--ios-separator);
+    border-radius: var(--ios-radius-medium);
+    background: var(--ios-surface-secondary);
+    color: var(--ios-label);
+    font-family: inherit;
+    font-size: 16px;
+    transition: border-color 0.2s ease;
+}
+
+.input-with-icon input:focus {
+    outline: none;
+    border-color: var(--ios-blue);
+}
+
+.save-btn {
+    width: 100%;
+    padding: var(--ios-spacing-lg);
+    background: linear-gradient(135deg, var(--ios-blue), var(--ios-blue-light));
+    color: white;
+    border: none;
+    border-radius: var(--ios-radius-medium);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ios-spacing-sm);
+}
+
+.save-btn:hover, .save-btn:active {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+/* 底部 */
+.footer {
+    text-align: center;
+    padding: var(--ios-spacing-lg) 0;
+    color: var(--ios-label-secondary);
+    font-size: 14px;
+}
+
+.footer-text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ios-spacing-sm);
+}
+
+/* 模态框 */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--ios-spacing-lg);
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    position: relative;
+    background: var(--ios-surface);
+    border-radius: var(--ios-radius-xlarge);
+    padding: var(--ios-spacing-lg);
+    width: 100%;
+    max-width: 400px;
+    box-shadow: var(--ios-shadow);
+    backdrop-filter: var(--ios-blur);
+    -webkit-backdrop-filter: var(--ios-blur);
+    z-index: 1001;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--ios-spacing-lg);
+    padding-bottom: var(--ios-spacing-md);
+    border-bottom: 1px solid var(--ios-separator);
+}
+
+.modal-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: var(--ios-spacing-sm);
+}
+
+.close-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: var(--ios-surface-secondary);
+    color: var(--ios-label);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.close-btn:hover, .close-btn:active {
+    background: var(--ios-surface-tertiary);
+}
+
+.modal-body {
+    margin-bottom: var(--ios-spacing-lg);
+}
+
+.modal-date {
+    display: flex;
+    align-items: center;
+    gap: var(--ios-spacing-sm);
+    margin-bottom: var(--ios-spacing-lg);
+    padding: var(--ios-spacing-md);
+    background: var(--ios-surface-secondary);
+    border-radius: var(--ios-radius-medium);
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.modal-input-group {
+    margin-bottom: var(--ios-spacing-lg);
+}
+
+.modal-input-group label {
+    display: block;
+    font-size: 14px;
+    color: var(--ios-label-secondary);
+    margin-bottom: var(--ios-spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--ios-spacing-sm);
+}
+
+.modal-footer {
+    display: flex;
+    gap: var(--ios-spacing-md);
+}
+
+.btn-danger {
+    flex: 1;
+    padding: var(--ios-spacing-md);
+    background: var(--ios-red);
+    color: white;
+    border: none;
+    border-radius: var(--ios-radius-medium);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ios-spacing-sm);
+}
+
+.btn-primary {
+    flex: 1;
+    padding: var(--ios-spacing-md);
+    background: linear-gradient(135deg, var(--ios-blue), var(--ios-blue-light));
+    color: white;
+    border: none;
+    border-radius: var(--ios-radius-medium);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ios-spacing-sm);
+}
+
+.btn-danger:hover, .btn-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+/* 响应式调整 */
+@media (max-width: 400px) {
+    .container {
+        padding: var(--ios-spacing-md);
+    }
+
+    .stats-container {
+        grid-template-columns: 1fr;
+    }
+
+    .input-row {
+        grid-template-columns: 1fr;
+    }
+
+    .month-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* 金额显示的通用样式 */
+.amount {
+    color: var(--ios-green);
+    font-weight: 500;
+}
+
+.amount.negative {
+    color: var(--ios-red);
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.container > * {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--ios-surface-secondary);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--ios-label-tertiary);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--ios-label-secondary);
+}
+
+/* 移动端优化 */
+@media (max-width: 480px) {
+    .container {
+        padding: var(--ios-spacing-md);
+    }
+
+    .app-title {
+        font-size: 24px;
+    }
+
+    .stat-card {
+        padding: var(--ios-spacing-md);
+        gap: var(--ios-spacing-md);
+    }
+
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+
+    .stat-value {
+        font-size: 20px;
+    }
+
+    .input-card {
+        padding: var(--ios-spacing-md);
+    }
+
+    .input-title {
+        font-size: 16px;
+    }
+
+    .calendar-container {
+        padding: var(--ios-spacing-md);
+    }
+
+    #calendar td {
+        height: 50px;
+        font-size: 14px;
+    }
+
+    #calendar td .amount {
+        font-size: 9px;
+    }
+
+    .month-grid, .year-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--ios-spacing-sm);
+    }
+
+    .month-cell, .year-cell {
+        padding: var(--ios-spacing-md);
+    }
+}
+
+/* iOS特定优化 */
+@supports (-webkit-touch-callout: none) {
+    /* 防止iOS点击高亮 */
+    * {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /* 改善iOS输入框外观 */
+    input, textarea, select {
+        -webkit-appearance: none;
+        border-radius: var(--ios-radius-medium);
+    }
+
+    /* 改善iOS按钮反馈 */
+    button {
+        -webkit-touch-callout: none;
+    }
+}
+
+/* 改善触摸体验 */
+@media (hover: none) and (pointer: coarse) {
+    .icon-btn, .nav-btn, .month-cell, .year-cell, #calendar td {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    input, select, textarea {
+        font-size: 16px; /* 防止iOS缩放 */
+    }
+
+    .save-btn, .btn-primary, .btn-danger {
+        padding: var(--ios-spacing-lg);
+        min-height: 50px;
+    }
+}
+
+/* 横屏优化 */
+@media (orientation: landscape) and (max-height: 500px) {
+    .container {
+        padding: var(--ios-spacing-sm);
+    }
+
+    .stats-container {
+        grid-template-columns: repeat(2, 1fr);
+        margin-bottom: var(--ios-spacing-md);
+    }
+
+    .calendar-container {
+        margin-bottom: var(--ios-spacing-md);
+    }
+
+    .input-section {
+        margin-bottom: var(--ios-spacing-md);
+    }
+}

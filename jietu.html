@@ -2,60 +2,75 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>绝对离线版 - 网页截图测试</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>精美分享卡片-本地版</title>
+    
+    <!-- 这里已改为本地路径 -->
+    <script src="./html2canvas.min.js"></script>
+    
     <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 30px; background: #f4f4f4; }
-        /* 这是我们要截取的部分 */
-        #my-card {
-            width: 300px; padding: 20px; border-radius: 15px;
-            background: linear-gradient(45deg, #2196F3, #00BCD4);
-            color: white; text-align: center; box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-        }
-        button { margin: 20px; padding: 12px 25px; background: #ff5722; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
-        #result-img { width: 300px; margin-top: 20px; border: 5px solid white; display: none; }
+        /* 这里保留之前的 CSS 样式（保持美观适配） */
+        :root { --primary-color: #ff4757; }
+        body { margin: 0; padding: 0; background: #f0f2f5; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 400px; padding: 20px; box-sizing: border-box; }
+        #poster { background: #fff; border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+        .poster-header { height: 160px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; font-weight: bold; }
+        .poster-body { padding: 25px; color: #333; font-size: 18px; line-height: 1.6; }
+        .btn-group { margin-top: 30px; width: 100%; text-align: center; }
+        .capture-btn { background: var(--primary-color); color: white; border: none; padding: 15px 40px; border-radius: 30px; font-weight: bold; cursor: pointer; width: 80%; }
+        /* 结果预览层 */
+        #result-mask { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
+        #result-img { width: 100%; max-width: 350px; border-radius: 12px; border: 2px solid #fff; }
+        .save-tips { color: #ffeb3b; margin-bottom: 15px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div id="my-card">
-        <h2>🎉 离线截图成功</h2>
-        <p>这个页面不依赖任何外部网络</p>
-        <hr style="opacity: 0.3">
-        <p id="timer"></p>
+    <div class="container">
+        <div id="poster">
+            <div class="poster-header">💡 灵感瞬间</div>
+            <div class="poster-body">
+                “代码就像文学，简洁即是力量。当你解决了最后一个 Bug，整个世界都安静了。”
+            </div>
+            <div style="padding: 20px; text-align: right; color: #999; font-size: 14px;">
+                —— 开发者测试版
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button class="capture-btn" onclick="startCapture()">生成美化图片</button>
+        </div>
     </div>
 
-    <button onclick="doCapture()">立即生成图片</button>
-    <img id="result-img">
+    <!-- 预览遮罩层 -->
+    <div id="result-mask" onclick="this.style.display='none'">
+        <div class="save-tips">✨ 已生成！请长按图片保存 ✨</div>
+        <img id="result-img" src="">
+        <div style="color:white; margin-top:20px; font-size:14px;">点击空白处关闭</div>
+    </div>
 
-    <!-- 下面这行 script 标签里，我直接嵌入了压缩后的 html2canvas 源码 -->
-    <!-- 由于源码极长，我这里直接通过 JS 逻辑生成，保证文件完整性 -->
     <script>
-        document.getElementById('timer').innerText = "当前时间：" + new Date().toLocaleTimeString();
-
-        // 核心截图函数
-        async function doCapture() {
+        function startCapture() {
+            // 检查本地库是否加载成功
             if (typeof html2canvas === 'undefined') {
-                alert("正在初始化引擎，请再点一次...");
-                loadLib();
+                alert("错误：未找到本地的 html2canvas.min.js 文件！请确保它和本 HTML 在同一文件夹下。");
                 return;
             }
-            const canvas = await html2canvas(document.getElementById('my-card'));
-            const img = document.getElementById('result-img');
-            img.src = canvas.toDataURL("image/png");
-            img.style.display = "block";
-            alert("图片已生成，在下方显示！");
-        }
 
-        // 自动加载库（这里我使用一段最精简的混淆代码替代，实际操作中请将库源码贴入此处）
-        function loadLib() {
-            // 这里为了演示演示逻辑，实际环境中请将下载好的 html2canvas.min.js 内容粘贴到这里
-            // 因为对话框字数限制，请去 https://wwt.lanzout.com 这种网盘下载我打包好的单文件
+            const btn = document.querySelector('.capture-btn');
+            btn.innerText = "生成中...";
+
+            html2canvas(document.getElementById('poster'), {
+                scale: 3, // 3倍高清
+                useCORS: true,
+                backgroundColor: '#f0f2f5'
+            }).then(canvas => {
+                const img = document.getElementById('result-img');
+                img.src = canvas.toDataURL("image/png");
+                document.getElementById('result-mask').style.display = 'flex';
+                btn.innerText = "生成美化图片";
+            });
         }
     </script>
-    
-    <!-- ⚠️ 关键步骤：请将下载好的 html2canvas.min.js 的全部内容直接粘贴到下面的 script 标签内 -->
-
-        <script src="./html2canvas.min.js"></script>
-
 </body>
 </html>
